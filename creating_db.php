@@ -105,12 +105,33 @@
 		}
 
 		function create_table_trafficcost(){
-			//create table trafficcost
+			try {
+				$sql = 'DROP TABLE IF EXISTS trafficcost;
+						CREATE TABLE IF NOT EXISTS trafficcost (
+							id bigint(20) unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    						apply_date date DEFAULT NULL UNIQUE KEY,
+    						network varchar(100) DEFAULT NULL,
+    						campaign varchar(100) DEFAULT NULL,
+    						tizer varchar(100) DEFAULT NULL UNIQUE KEY,
+    						site varchar(100) DEFAULT NULL UNIQUE KEY,
+    						clicks int(11) NOT NULL DEFAULT 0,
+    						sum_cost decimal(10,4) DEFAULT NULL,
+    						KEY date(apply_date)
+						)ENGINE=InnoDB AUTO_INCREMENT=21174976 DEFAULT CHARSET=utf8';
+				
+				$s = $this->pdo->prepare($sql);
+				$s->execute();
+			}
+			catch (PDOException $e) {
+				self::db_error('Error of deleting user: ', $e);
+			}	
 		}
 
 		function select_group_insert(){
 			try {
-				$sql = 'SELECT * FROM vw GROUP BY apply_time, ad_id, hsite2';
+				$sql = 'SELECT date(apply_time), ip, ad_id, camp_id, hsite2, sum(cost), count(*) 
+							FROM vw 
+							GROUP BY apply_time, ad_id, hsite2';
 				$result = $this->pdo->query($sql);
 			}
 			catch (PDOException $e) {
@@ -118,12 +139,42 @@
 			}
 
 			while ($row = $result->fetch()){
-				//insert in trafficcost
+				$this->insert_data_trafficcost($row['date(apply_time)'],
+												$row['ip'],
+												$row['ad_id'],
+												$row['camp_id'],
+												$row['hsite2'],
+												$row['sum(cost)'],
+												$row['count(*)']);
 			}
 		}
 
-		function insert_data_trafficcost(){
-			//insert in trafficcost
+		function insert_data_trafficcost($apply_date, $network, $campaign, $tizer, $site, $clicks, $sum_cost){
+			try {
+				$sql = 'INSERT INTO trafficcost SET 
+						apply_date = :apply_date,
+						network = :network,
+						campaign = :campaign,
+						tizer = :tizer,
+						site = :site,
+						clicks = :clicks,
+						sum_cost = :sum_cost
+						ON DUPLICATE KEY UPDATE
+						clicks = clicks + 1'; //carefully
+				
+				$s = $this->pdo->prepare($sql);
+				$s->bindValue(':apply_date', $apply_date);
+				$s->bindValue(':network', $network);
+				$s->bindValue(':campaign', $campaign);
+				$s->bindValue(':tizer', $tizer);
+				$s->bindValue(':site', $site);
+				$s->bindValue(':clicks', $clicks);
+				$s->bindValue(':sum_cost', $sum_cost);
+				$s->execute();
+			}
+			catch (PDOException $e) {
+				self::db_error('Insert data error: ', $e);	
+			}
 		}
 
 		function destroy_connection(){

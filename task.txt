@@ -1,0 +1,34 @@
+В xml представлена статистика по переходам посетителей (архив vw.zip)
+Каждый файл содержит уникальные переходы за определенную дату (дата указана в имени файла)
+
+1) создать таблицу vw по структуре данных xml 
+2) вставка в таблицу vw всех переходов из xml 
+3) вставка сгруппированных данных в таб. trafficcost с  UPDATE on duplicate key 
+группировать по date ,ad_id,hsite2
+
+соостветствие полей в таблицах vw => traficcost
+datetime => date
+ad_id => tizer
+hsite2 => site
+count() => clicks
+sum(cost) => money
+
+вставлять  в соответствующие поля таб. trafficcost указаные выше
+*при вставке в trafficcost поле network = 'vw'
+
+
+таб. trafficcost:
+CREATE TABLE `trafficcost` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `date` date DEFAULT NULL,
+  `network` varchar(100) DEFAULT NULL,
+  `campaign` varchar(100) DEFAULT NULL,
+  `tizer` varchar(100) DEFAULT NULL,
+  `site` varchar(100) DEFAULT NULL,
+  `views` int(11) NOT NULL DEFAULT '0',
+  `clicks` int(11) NOT NULL DEFAULT '0',
+  `money` decimal(10,4) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `all` (`date`,`tizer`,`site`),
+  KEY `date` (`date`)
+) ENGINE=InnoDB AUTO_INCREMENT=21174976 DEFAULT CHARSET=utf8
