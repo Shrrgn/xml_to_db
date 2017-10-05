@@ -1,23 +1,31 @@
 <?php
+//Taking data from xml and adding it to database
 	
 	class DBFromXML {
 
+		private static $host = "localhost";
+		private static $db_name = "users_db";
+		private static $user_name = "artem";
+		private static $user_password = "artem";
+
+		public static $xmls = array('vw/VW_stat_05.09.2017.xml', 'vw/VW_stat_06.09.2017.xml', 'vw/VW_stat_07.09.2017.xml',
+									'vw/VW_stat_08.09.2017.xml', 'vw/VW_stat_09.09.2017.xml', 'vw/VW_stat_10.09.2017.xml', 
+									'vw/VW_stat_11.09.2017.xml');
+			
 		function __construct(){
+			$this->pdo = $this->db_connection(self::$host, self::$db_name, self::$user_name, self::$user_password);
+		}
+
+		function db_connection($host, $db, $user, $password){
 			try {
-				$pdo = new PDO('mysql:host=localhost;dbname=users_db', 'artem', 'artem');
+				$pdo = new PDO('mysql:host=' . $host . ';dbname=' . $db, $user, $password);
 				$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 				$pdo->exec('SET NAMES "utf8"') ;
 			}
 			catch (PDOException $e) {
 				self::db_error("Couldn't make connection to database: ", $e);
 			}
-			$this->pdo = $pdo;
-		}
-
-		static function db_error($string, $exception){
-			$output = $string . $exception->getMessage();
-			include 'output.html.php';
-			exit();
+			return $pdo;
 		}
 
 		function create_table_vw(){
@@ -43,18 +51,15 @@
 		}
 
 		function parsing_xml_insert(){
-			$xmls = array('vw/VW_stat_05.09.2017.xml', 'vw/VW_stat_06.09.2017.xml', 'vw/VW_stat_07.09.2017.xml',
-							'vw/VW_stat_08.09.2017.xml', 'vw/VW_stat_09.09.2017.xml', 'vw/VW_stat_10.09.2017.xml', 'vw/VW_stat_11.09.2017.xml');
-
 			
-			foreach ($xmls as $xml_file){ 
+			foreach (self::$xmls as $xml_file){ 
 
 				if (file_exists($xml_file)) {
-					$vw_stats = simplexml_load_file($xmls[0]);
+					$vw_stats = simplexml_load_file($xml_file);
 					
 					foreach ($vw_stats->stat as $data) {
 						
-						$this->insert_data_vw(self::get_data_from_filename($xmls[0]) . ' ' . $data->time,
+						$this->insert_data_vw(self::get_date_from_filename($xml_file) . ' ' . $data->time,
 												$data->ip,
 												$data->country,
 												$data->city,
@@ -99,11 +104,39 @@
 			}
 		}
 
+		function create_table_trafficcost(){
+			//create table trafficcost
+		}
+
+		function select_group_insert(){
+			try {
+				$sql = 'SELECT * FROM vw GROUP BY apply_time, ad_id, hsite2';
+				$result = $this->pdo->query($sql);
+			}
+			catch (PDOException $e) {
+				self::db_error('Select data error: ', $e);
+			}
+
+			while ($row = $result->fetch()){
+				//insert in trafficcost
+			}
+		}
+
+		function insert_data_trafficcost(){
+			//insert in trafficcost
+		}
+
 		function destroy_connection(){
 			$this->pdo = null;
 		}
 
-		static function get_data_from_filename($file){
+		static function db_error($string, $exception){
+			$output = $string . $exception->getMessage();
+			include 'output.html.php';
+			exit();
+		}
+
+		static function get_date_from_filename($file){
 			$match = array();
 			preg_match('/^.*([0-9]{2})\.([0-9]+)\.([0-9]+).*$/', $file, $match);
 			return $match[3]. '-' . $match[2] . '-' . $match[1];
