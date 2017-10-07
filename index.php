@@ -5,7 +5,7 @@
 	
 	$vw->create_table_vw();
 	$vw->parsing_xml_insert();
-	$vw->create_table_trafficcost();
+	//$vw->create_table_trafficcost(); it must be already created
 	$vw->select_group_insert();
 	$vw->destroy_connection();
 	

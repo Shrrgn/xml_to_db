@@ -1,6 +1,6 @@
 <?php
 //Taking data from xml and adding it to database
-	
+
 	class DBFromXML {
 
 		private static $host = "localhost";
@@ -46,7 +46,7 @@
 				$s->execute();
 			}
 			catch (PDOException $e) {
-				self::db_error('Error of deleting user: ', $e);
+				self::db_error('Error of creating table: ', $e);
 			}
 		}
 
@@ -109,15 +109,16 @@
 				$sql = 'DROP TABLE IF EXISTS trafficcost;
 						CREATE TABLE IF NOT EXISTS trafficcost (
 							id bigint(20) unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    						apply_date date DEFAULT NULL UNIQUE KEY,
+    						apply_date date DEFAULT NULL,
     						network varchar(100) DEFAULT NULL,
     						campaign varchar(100) DEFAULT NULL,
-    						tizer varchar(100) DEFAULT NULL UNIQUE KEY,
-    						site varchar(100) DEFAULT NULL UNIQUE KEY,
+    						tizer varchar(100) DEFAULT NULL,
+    						site varchar(100) DEFAULT NULL,
     						clicks int(11) NOT NULL DEFAULT 0,
     						sum_cost decimal(10,4) DEFAULT NULL,
+    						UNIQUE KEY DateTizerSite (apply_date, tizer, site),
     						KEY date(apply_date)
-						)ENGINE=InnoDB AUTO_INCREMENT=21174976 DEFAULT CHARSET=utf8';
+						)ENGINE=InnoDB AUTO_INCREMENT=21174976 DEFAULT CHARSET=utf8'; // UNIQUE KEY through phpMyAdmin
 				
 				$s = $this->pdo->prepare($sql);
 				$s->execute();
@@ -131,7 +132,7 @@
 			try {
 				$sql = 'SELECT date(apply_time), ip, ad_id, camp_id, hsite2, sum(cost), count(*) 
 							FROM vw 
-							GROUP BY apply_time, ad_id, hsite2';
+							GROUP BY date(apply_time), ad_id, hsite2';
 				$result = $this->pdo->query($sql);
 			}
 			catch (PDOException $e) {
@@ -141,11 +142,11 @@
 			while ($row = $result->fetch()){
 				$this->insert_data_trafficcost($row['date(apply_time)'],
 												$row['ip'],
-												$row['ad_id'],
 												$row['camp_id'],
+												$row['ad_id'],
 												$row['hsite2'],
-												$row['sum(cost)'],
-												$row['count(*)']);
+												$row['count(*)'],
+												$row['sum(cost)']);
 			}
 		}
 
@@ -160,7 +161,8 @@
 						clicks = :clicks,
 						sum_cost = :sum_cost
 						ON DUPLICATE KEY UPDATE
-						clicks = clicks + 1'; //carefully
+						clicks = clicks + clicks,
+						sum_cost = sum_cost + sum_cost'; //carefully
 				
 				$s = $this->pdo->prepare($sql);
 				$s->bindValue(':apply_date', $apply_date);
